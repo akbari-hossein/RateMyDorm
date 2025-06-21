@@ -1,14 +1,11 @@
 from rest_framework import serializers
 from .models import Comment
-from university.models import University
+from buildings.models import Building
+from student.models import Student
 
 class CommentSerializer(serializers.ModelSerializer):
-
-    creator = serializers.HyperlinkedRelatedField(
-        read_only=True,
-        view_name='user-detail',
-        lookup_field='username'
-    )
+    student = serializers.StringRelatedField(read_only=True)
+    building = serializers.StringRelatedField(read_only=True)
 
     class Meta:
         model = Comment
@@ -16,54 +13,33 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class CommentCreateSerializer(serializers.ModelSerializer):
     content = serializers.CharField(allow_blank=False)
-    post = serializers.HyperlinkedRelatedField(
-        read_only=True,
-        view_name='post-detail'
-    )
-    post_id = serializers.IntegerField(
-        required=True,
-        help_text=('Required. Id of the post this comment is created in')
-    )
-    creator = serializers.HyperlinkedRelatedField(
-        read_only=True,
-        view_name='user-detail',
-        lookup_field='username'
-    )
+    building_id = serializers.IntegerField(required=True, help_text='Id of the building this comment is for')
+
     class Meta:
         model = Comment
         fields = (
             'id',
             'content',
             'created_at',
-            'creator',
-            'post',
-            'post_id'
+            'student',
+            'building_id',
+            'image',
         )
-        read_only_fields=('id', 'created_at', 'post', 'creator')
+        read_only_fields = ('id', 'created_at', 'student')
 
     def create(self, validated_data):
         content = validated_data['content']
-        post_id = validated_data['post_id']
-
-        # Get thread object
+        building_id = validated_data['building_id']
+        image = validated_data.get('image')
         try:
-            post = University.objects.get(id=post_id)
-        except University.DoesNotExist:
-            raise serializers.ValidationError('Thread does not exist, please enter correct thread id')
-
-        # Get the requesting user
-        user = None
-        request = self.context.get("request")
-        if request and hasattr(request, "user"):
-            user = request.user
-        else:
-            raise serializers.ValidationError('برای ثبت سوال ابتدا باید وارد اکانت خود شوید.')
-
-        # Create the comment
-        comment = Comment(
+            building = Building.objects.get(id=building_id)
+        except Building.DoesNotExist:
+            raise serializers.ValidationError('Building does not exist, please enter correct building id')
+        user = self.context['request'].user
+        comment = Comment.objects.create(
             content=content,
-            post= post,
-            creator=user
+            building=building,
+            student=user,
+            image=image
         )
-        comment.save()
         return comment
