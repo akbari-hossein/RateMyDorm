@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Comment
-from buildings.models import Building
+from building.models import Building
 from student.models import Student
 
 class CommentSerializer(serializers.ModelSerializer):

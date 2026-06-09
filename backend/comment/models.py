@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-from buildings.models import Building
+from building.models import Building
 from django.utils.timezone import now
 
 User = get_user_model()

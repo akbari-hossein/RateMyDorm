@@ -1,6 +1,6 @@
 from rest_framework import routers
 from university.views import UniversityViewSet
-from buildings.views import BuildingViewSet
+from building.views import BuildingViewSet
 from student.views import StudentViewSet
 from comment.views import CommentsListAPIView, CommentsCreateAPIView, CommentsDetailAPIView
 from django.urls import path, include

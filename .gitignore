@@ -1,1 +1,13 @@
-venv
+# Python / Django
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.log
+
+# venv
+.venv/
+venv/
+
+# env
+.env
+.env.*
