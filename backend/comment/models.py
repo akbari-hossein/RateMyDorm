@@ -37,26 +37,14 @@ class Comment(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True, editable=False, verbose_name=_("Created At"))
 
+    is_approved = models.BooleanField(
+        default=False, 
+        verbose_name=_("Is Approved by Admin")
+    )
     class Meta:
         verbose_name = _("Comment")
         verbose_name_plural = _("Comments")
-        unique_together = ('student', 'building')
         ordering = ['-created_at'] # Order by most recent comments first
-
-    # Validation to ensure that the student can only comment on their current building
-    def clean(self):
-        
-        # Student complete profile check
-        if not hasattr(self.student, 'current_building'):
-            raise ValidationError(_("Your student profile is incomplete."))
-
-        # Ensure that the student is currently assigned to a building
-        if not self.student.current_building:
-            raise ValidationError(_("You are not currently assigned to any building and cannot comment."))
-        
-        # Ensure that the student can only comment on their current building
-        if self.student.current_building != self.building:
-            raise ValidationError(_("Access Denied! You can only comment on your own residential building."))
 
     # Override save method to call full_clean for validation before saving
     def save(self, *args, **kwargs):

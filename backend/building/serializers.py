@@ -4,4 +4,4 @@ from .models import Building
 class BuildingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Building
-        fields = '__all__'
+        fields = ['id', 'name', 'university', 'gender', 'description', 'address', 'facilities']

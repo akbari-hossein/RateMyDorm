@@ -1,7 +1,9 @@
 from rest_framework import serializers
 from .models import Comment
 from building.models import Building
-from student.models import Student
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class CommentSerializer(serializers.ModelSerializer):
     student = serializers.StringRelatedField(read_only=True)
@@ -14,8 +16,11 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class CommentCreateSerializer(serializers.ModelSerializer):
     content = serializers.CharField(allow_blank=False)
-    building_id = serializers.IntegerField(required=True, help_text='Id of the building this comment is for')
-    rating = serializers.IntegerField(min_value=1, max_value=5, required=True)
+    # This automatically validates existence and approval status
+    building = serializers.PrimaryKeyRelatedField(
+        queryset=Building.objects.filter(is_approved=True)
+    )
+    rating = serializers.IntegerField(required=True, min_value=1, max_value=5)
 
     class Meta:
         model = Comment
@@ -25,26 +30,13 @@ class CommentCreateSerializer(serializers.ModelSerializer):
             'rating',
             'created_at',
             'student',
-            'building_id',
+            'building',
             'image',
         )
         read_only_fields = ('id', 'created_at', 'student')
 
     def create(self, validated_data):
-        content = validated_data['content']
-        building_id = validated_data['building_id']
-        rating = validated_data['rating']
-        image = validated_data.get('image')
-        try:
-            building = Building.objects.get(id=building_id)
-        except Building.DoesNotExist:
-            raise serializers.ValidationError('Building does not exist, please enter correct building id')
+        # Inject the student from the request context
         user = self.context['request'].user
-        comment = Comment.objects.create(
-            content=content,
-            building=building,
-            student=user,
-            rating=rating,
-            image=image
-        )
-        return comment
+        validated_data['student'] = user
+        return super().create(validated_data)
