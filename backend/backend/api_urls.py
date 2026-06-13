@@ -7,7 +7,7 @@ from django.urls import path, include
 
 router = routers.DefaultRouter()
 router.register(r'universities', UniversityViewSet)
-router.register(r'buildings', BuildingViewSet)
+router.register(r'buildings', BuildingViewSet, basename='building')
 router.register(r'students', StudentViewSet)
 
 urlpatterns = [
