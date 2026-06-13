@@ -6,20 +6,23 @@ from student.models import Student
 class CommentSerializer(serializers.ModelSerializer):
     student = serializers.StringRelatedField(read_only=True)
     building = serializers.StringRelatedField(read_only=True)
+    building_id = serializers.IntegerField(source="building.id", read_only=True)
 
     class Meta:
         model = Comment
-        fields = '__all__'
+        fields = "__all__"
 
 class CommentCreateSerializer(serializers.ModelSerializer):
     content = serializers.CharField(allow_blank=False)
     building_id = serializers.IntegerField(required=True, help_text='Id of the building this comment is for')
+    rating = serializers.IntegerField(min_value=1, max_value=5, required=True)
 
     class Meta:
         model = Comment
         fields = (
             'id',
             'content',
+            'rating',
             'created_at',
             'student',
             'building_id',
@@ -30,6 +33,7 @@ class CommentCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         content = validated_data['content']
         building_id = validated_data['building_id']
+        rating = validated_data['rating']
         image = validated_data.get('image')
         try:
             building = Building.objects.get(id=building_id)
@@ -40,6 +44,7 @@ class CommentCreateSerializer(serializers.ModelSerializer):
             content=content,
             building=building,
             student=user,
+            rating=rating,
             image=image
         )
         return comment

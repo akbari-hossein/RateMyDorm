@@ -1,13 +1,14 @@
 # RateMyDorm
 
-A platform for university students to discover dormitories and share honest reviews. Browse universities and their residence buildings, read what other students have written, and post your own experiences—with optional photos.
+A Telegram Mini App for university students to discover dormitories and share honest reviews. Browse universities and their residence buildings, read what other students have written, and post your own experiences—with optional photos.
 
 ## Features
 
 - **Universities** — Browse schools by name, city, and country
 - **Buildings** — Explore dormitories linked to each university
-- **Reviews** — Read and write comments about specific buildings
-- **Student accounts** — Lightweight auth via Telegram ID (custom user model)
+- **Reviews** — Read and write star-rated comments about specific buildings
+- **Telegram auth** — Sign in automatically via Telegram Mini App
+- **Profile setup** — Select your university and current dorm to enable reviewing
 - **Image uploads** — Attach photos to reviews (optional)
 
 ## Tech Stack
@@ -15,7 +16,8 @@ A platform for university students to discover dormitories and share honest revi
 | Layer    | Technology                          |
 | -------- | ----------------------------------- |
 | Backend  | Django 5.2, Django REST Framework   |
-| Frontend | React 19 (Create React App)         |
+| Frontend | Next.js 15, React 19, Tailwind CSS  |
+| Auth     | Telegram WebApp + SimpleJWT         |
 | Database | SQLite                              |
 | Media    | Pillow (image handling)             |
 
@@ -26,9 +28,9 @@ RateMyDorm/
 ├── backend/          # Django API
 │   ├── university/   # University model & endpoints
 │   ├── building/     # Dorm/building model & endpoints
-│   ├── student/      # Custom student user model
+│   ├── student/      # Custom student user model + Telegram auth
 │   └── comment/      # Review/comment model & endpoints
-├── frontend/         # React client
+├── frontend/         # Next.js Telegram Mini App
 └── requirements.txt  # Python dependencies
 ```
 
@@ -38,6 +40,7 @@ RateMyDorm/
 
 - Python 3.10+
 - Node.js 18+ and npm
+- A Telegram Bot (from [@BotFather](https://t.me/BotFather)) for Mini App auth
 
 ### Backend
 
@@ -57,20 +60,26 @@ RateMyDorm/
    pip install -r requirements.txt
    ```
 
-3. Run migrations:
+3. Create `backend/.env` with your bot token:
+
+   ```
+   TELEGRAM_BOT_TOKEN=your_bot_token_here
+   ```
+
+4. Run migrations:
 
    ```bash
    cd backend
    python manage.py migrate
    ```
 
-4. (Optional) Create a superuser for the Django admin:
+5. (Optional) Create a superuser for the Django admin:
 
    ```bash
    python manage.py createsuperuser
    ```
 
-5. Start the development server:
+6. Start the development server:
 
    ```bash
    python manage.py runserver
@@ -78,7 +87,7 @@ RateMyDorm/
 
    The API is available at `http://127.0.0.1:8000/api/`.
 
-### Frontend
+### Frontend (Next.js)
 
 1. Install dependencies:
 
@@ -87,38 +96,57 @@ RateMyDorm/
    npm install
    ```
 
-2. Start the development server:
+2. Copy environment file:
 
    ```bash
-   npm start
+   cp .env.local.example .env.local
+   ```
+
+3. Start the development server:
+
+   ```bash
+   npm run dev
    ```
 
    The app runs at `http://localhost:3000`.
 
+### Telegram Mini App Setup
+
+1. Create a bot via [@BotFather](https://t.me/BotFather)
+2. Set the Mini App URL to your deployed Next.js frontend (or use a tunnel like ngrok for local dev)
+3. Open the Mini App inside Telegram — auth uses `initData` automatically
+
+## Frontend Pages
+
+| Route | Description |
+| ----- | ----------- |
+| `/` | Home — recent reviews + university browse |
+| `/universities` | All universities |
+| `/universities/[id]` | University detail with dorm list |
+| `/buildings/[id]` | Building detail with reviews |
+| `/profile` | Set university & dorm, view account |
+| `/review` | Write a review for your assigned dorm |
+
 ## API Endpoints
 
-| Method | Endpoint                  | Description                    |
-| ------ | ------------------------- | ------------------------------ |
-| GET    | `/api/universities/`      | List all universities          |
-| POST   | `/api/universities/`      | Create a university            |
-| GET    | `/api/universities/{id}/` | Retrieve a university          |
-| GET    | `/api/buildings/`         | List all buildings             |
-| POST   | `/api/buildings/`         | Create a building              |
-| GET    | `/api/buildings/{id}/`    | Retrieve a building            |
-| GET    | `/api/students/`          | List students                  |
-| POST   | `/api/students/`          | Register a student             |
-| GET    | `/api/comments/`          | List all reviews (newest first)|
-| POST   | `/api/comments/create/`   | Post a review (auth required)  |
-| GET    | `/api/comments/{id}/`     | Retrieve a single review       |
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| POST | `/api/students/auth/telegram/` | Telegram Mini App login |
+| GET | `/api/universities/` | List all universities |
+| GET | `/api/buildings/` | List all buildings |
+| PATCH | `/api/students/{id}/` | Update profile (university, dorm) |
+| GET | `/api/comments/` | List all reviews (newest first) |
+| POST | `/api/comments/create/` | Post a review (auth required) |
 
 ### Creating a Review
 
-Send a `POST` request to `/api/comments/create/` with:
+Send a `POST` request to `/api/comments/create/` with Bearer token:
 
 ```json
 {
   "content": "Great location, quiet at night.",
-  "building_id": 1
+  "building_id": 1,
+  "rating": 4
 }
 ```
 
@@ -127,13 +155,9 @@ An optional `image` file can be included as multipart form data.
 ## Data Models
 
 - **University** — `name`, `city`, `country`, `description`
-- **Building** — `university`, `name`, `address`, `description`
-- **Student** — `telegram_id` (login identifier), `username`, `first_name`, `last_name`
-- **Comment** — `content`, `building`, `student`, `image`, `created_at`
-
-## Admin Panel
-
-Django admin is available at `http://127.0.0.1:8000/admin/` for managing universities, buildings, students, and comments.
+- **Building** — `university`, `name`, `address`, `description`, `gender`, `facilities`
+- **Student** — `telegram_id`, `username`, `first_name`, `last_name`, `university`, `current_building`
+- **Comment** — `content`, `rating` (1–5), `building`, `student`, `image`, `created_at`
 
 ## License
 
