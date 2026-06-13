@@ -8,10 +8,11 @@ User = get_user_model()
 class CommentSerializer(serializers.ModelSerializer):
     student = serializers.StringRelatedField(read_only=True)
     building = serializers.StringRelatedField(read_only=True)
+    building_id = serializers.IntegerField(source="building.id", read_only=True)
 
     class Meta:
         model = Comment
-        fields = '__all__'
+        fields = "__all__"
 
 class CommentCreateSerializer(serializers.ModelSerializer):
     content = serializers.CharField(allow_blank=False)
