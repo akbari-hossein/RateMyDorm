@@ -1,5 +1,6 @@
 from django.db import models
 from university.models import University
+from django.conf import settings
 
 class Building(models.Model):
     GENDER_CHOICES = [
@@ -12,7 +13,15 @@ class Building(models.Model):
     description = models.TextField(blank=True, null=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, default='M')
     facilities = models.TextField(blank=True, null=True)
-
+    is_approved = models.BooleanField(default=False, verbose_name="approved by admin")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        verbose_name="Registrar"
+    )
+    
     class Meta:
         unique_together = ('university', 'name')
         
